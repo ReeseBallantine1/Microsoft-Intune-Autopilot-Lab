@@ -71,18 +71,55 @@ Windows 11 Endpoint
 
 The Windows 11 virtual machine was registered with Windows Autopilot and managed through Microsoft Intune.
 
-A user-driven Autopilot deployment profile was configured to provide automated Windows provisioning.
+The Autopilot workflow included collecting the device hardware hash, importing the device into Intune, confirming registration, creating a user-driven deployment profile, and assigning the profile.
+
+### 1. Hardware Hash Collection
+
+The Windows Autopilot hardware hash was collected from the Windows 11 endpoint using PowerShell and the `Get-WindowsAutopilotInfo` script.
+
+![Autopilot Hardware Hash Captured](images/autopilot/09-Autopilot-Hardware-Hash-Captured.png)
+
+### 2. Hardware Hash Import
+
+The collected hardware information was imported into the Windows Autopilot devices section of Microsoft Intune.
+
+![Autopilot Hardware Hash Import](images/autopilot/10-Autopilot-Hardware-Hash-Import.png)
+
+### 3. Device Registration
+
+After synchronization, the device appeared in Windows Autopilot, confirming successful registration.
+
+![Autopilot Device Registered](images/autopilot/11-Autopilot-Device-Registered.png)
+
+### 4. User-Driven Deployment Profile
+
+A user-driven Windows Autopilot deployment profile was configured.
 
 The deployment configuration included:
 
-- User-driven deployment
-- Microsoft Entra join
+- User-driven deployment mode
+- Microsoft Entra joined deployment
 - Standard user account
+- Automatic keyboard configuration
 - Microsoft Software License Terms hidden
 - Privacy settings hidden
 - Account change options hidden
 
-The Autopilot profile was assigned to the Windows endpoint through Intune.
+![Autopilot User-Driven Profile Configuration](images/autopilot/11.1-Autopilot-User-Driven-Profile-Configuration.png)
+
+### 5. Profile Assignment
+
+The Windows Autopilot deployment profile was assigned to the target devices through Microsoft Intune.
+
+![Autopilot Profile Assigned to Device](images/autopilot/11.2-Autopilot-Profile-Assigned-to-Device.png)
+
+### Autopilot Result
+
+The Windows endpoint was successfully registered with Windows Autopilot and assigned a user-driven deployment profile for Microsoft Entra ID joined deployment.
+
+The completed workflow demonstrates:
+
+**Hardware Hash Collection → Hardware Hash Import → Device Registration → Deployment Profile Configuration → Profile Assignment**
 
 ---
 
@@ -195,7 +232,7 @@ This provides evidence that the policies configured in Intune actually reached a
 ## Repository Structure
 
 ```text
-intune-windows11-endpoint-lab/
+Microsoft-Intune-Autopilot-Lab/
 │
 ├── README.md
 │
@@ -209,6 +246,12 @@ intune-windows11-endpoint-lab/
 │
 └── images/
     ├── autopilot/
+    │   ├── 09-Autopilot-Hardware-Hash-Captured.png
+    │   ├── 10-Autopilot-Hardware-Hash-Import.png
+    │   ├── 11-Autopilot-Device-Registered.png
+    │   ├── 11.1-Autopilot-User-Driven-Profile-Configuration.png
+    │   └── 11.2-Autopilot-Profile-Assigned-to-Device.png
+    │
     ├── configuration/
     ├── compliance/
     ├── bitlocker/
@@ -225,10 +268,28 @@ The lab covers device registration, Windows Autopilot provisioning, Microsoft In
 
 A key focus of the project is verifying security controls directly from the Windows endpoint rather than relying exclusively on management portal status.
 
+The Windows Autopilot portion of the project demonstrates the process of capturing device hardware information, registering a device with Autopilot, configuring a deployment profile, and assigning that profile through Microsoft Intune.
+
+---
+
+## Security and Privacy
+
+Screenshots used in this repository are reviewed before publication.
+
+Sensitive information such as the following is redacted where necessary:
+
+- Tenant IDs
+- Usernames and email addresses
+- Device identifiers
+- Serial numbers
+- Recovery keys
+- Authentication information
+- Other environment-specific identifiers
+
 ---
 
 ## Disclaimer
 
 This project was created in a lab environment for educational and portfolio purposes.
 
-Any tenant information, usernames, device identifiers, serial numbers, recovery keys, or other sensitive information shown in screenshots should be redacted before publication.
+The environment does not represent a production Microsoft Intune deployment. Configuration choices were made to demonstrate endpoint management concepts and practical administration skills.
