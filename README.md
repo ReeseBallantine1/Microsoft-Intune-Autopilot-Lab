@@ -97,11 +97,9 @@ The workflow included:
 - Assigning the deployment profile to the device
 - Confirming the Autopilot profile status was **Assigned**
 
-Existing evidence for this phase is stored under:
+### User-driven deployment profile
 
-```text
-images/autopilot/
-```
+![Autopilot user-driven deployment profile](images/autopilot/Autopilot-User-Driven-Profile.png)
 
 ---
 
@@ -109,11 +107,15 @@ images/autopilot/
 
 The Enrollment Status Page was configured to display device provisioning progress and block device use while required device configuration was being applied.
 
+![Enrollment Status Page configuration](images/autopilot/Autopilot-ESP-Configuration.png)
+
 The successful deployment reached the Windows Autopilot Enrollment Status Page and completed the critical provisioning stages:
 
 - **Device preparation — Completed**
 - **Device setup — Completed**
 - Device continued successfully to the Windows desktop
+
+![Successful Autopilot ESP provisioning](images/autopilot/Autopilot-ESP-Success-BT-LAPTOP-02.png)
 
 This confirmed that the rebuilt endpoint could complete the provisioning flow after the earlier deployment issue had been remediated.
 
@@ -123,19 +125,11 @@ This confirmed that the rebuilt endpoint could complete the provisioning flow af
 
 After Autopilot provisioning, the Windows 11 endpoint successfully joined Microsoft Entra ID and enrolled into Microsoft Intune.
 
-Device-side validation with `dsregcmd /status` confirmed:
+Device-side validation with `dsregcmd /status` confirmed Microsoft Entra join state on the endpoint.
 
-```text
-AzureAdJoined : YES
-EnterpriseJoined : NO
-DomainJoined : NO
-DeviceAuthStatus : SUCCESS
-TpmProtected : YES
-```
+![Microsoft Entra device join validation](images/validation/Entra-Device-Join-dsregcmd-Redacted.png)
 
 This validated that the endpoint was cloud joined rather than traditional Active Directory domain joined.
-
-The Intune managed-device record also confirmed successful management, ownership, enrollment, primary user association, and device check-in.
 
 ---
 
@@ -143,16 +137,11 @@ The Intune managed-device record also confirmed successful management, ownership
 
 A key validation point in this project was confirming that the Microsoft Intune Management Extension was installed and functioning correctly after the successful rebuild.
 
-The Windows work/school management page showed centrally applied policy categories including:
-
-- ADMX / Windows Explorer
-- BitLocker
-- Defender
-- Device Lock
-- Security
-- System
+The Windows work/school management page showed centrally applied policy categories including ADMX / Windows Explorer, BitLocker, Defender, Device Lock, Security, and System.
 
 The Microsoft Intune Management Extension application status reported **EnforcementCompleted**, providing direct evidence that the management extension was successfully installed and processing policy.
+
+![Intune Management Extension EnforcementCompleted](images/validation/Intune-Management-IME-EnforcementCompleted-Redacted.png)
 
 This is especially important because the earlier failed endpoint had not successfully established the expected IME state.
 
@@ -174,17 +163,17 @@ A Windows 11 device configuration profile was created with Device Lock controls 
 | Maximum Inactivity Time Device Lock | 15 minutes |
 | Minimum Device Password Length | 8 |
 
-### Microsoft Defender Antivirus
-
-Microsoft Defender Antivirus settings were configured through Intune and validated on the managed endpoint.
-
 ### Microsoft Defender Firewall
 
 Firewall policy was deployed and validated with PowerShell. Domain, Private, and Public firewall profiles reported as enabled.
 
+![Microsoft Defender Firewall PowerShell validation](images/security/Firewall-PowerShell-Validation.png)
+
 ### Attack Surface Reduction
 
 Attack Surface Reduction rules were deployed through Intune and verified from PowerShell by reviewing the configured ASR rule IDs and actions.
+
+![Attack Surface Reduction PowerShell validation](images/security/ASR-PowerShell-Validation.png)
 
 ### Security Baseline / SmartScreen
 
@@ -196,13 +185,11 @@ Microsoft Defender SmartScreen remained enabled as part of the Windows security 
 
 BitLocker was successfully deployed and validated as part of the endpoint security configuration.
 
-The project demonstrates:
+The project demonstrates centralized BitLocker policy deployment, endpoint-side encryption validation, compliance reporting, and recovery key escrow.
 
-- Centralized BitLocker policy deployment
-- Encryption status validation from the endpoint
-- BitLocker compliance reporting in Intune
-- Recovery key escrow to Microsoft Entra ID / Intune
-- Administrative recovery key visibility without exposing the recovery password publicly
+![BitLocker fully encrypted endpoint validation](images/bitlocker/BitLocker-Fully-Encrypted.png)
+
+![BitLocker recovery key escrow](images/bitlocker/BitLocker-Recovery-Key-Escrow.png)
 
 > **Security Note:** Recovery passwords are not published in this repository.
 
@@ -212,41 +199,27 @@ The project demonstrates:
 
 Windows Local Administrator Password Solution was configured through Intune.
 
-The lab demonstrates:
+The lab demonstrates policy assignment, successful policy application, local administrator password escrow, rotation information, and the administrative retrieval workflow.
 
-- Windows LAPS policy creation
-- Policy assignment
-- Successful policy application
-- Local administrator password escrow
-- Administrative password retrieval workflow
+![Windows LAPS password escrow with password masked](images/laps/LAPS-Password-Escrow-Masked.png)
 
 > **Security Note:** LAPS passwords are masked or redacted in all public evidence.
 
 ---
 
-## 8. Compliance Policy
+## 8. Compliance Policy and Remediation
 
-A Windows compliance policy was used to evaluate endpoint security requirements including:
+A Windows compliance policy was used to evaluate endpoint security requirements including Firewall, Anti-spyware, Antivirus, BitLocker, Microsoft Defender Antimalware, Real-time protection, Secure Boot, Defender security intelligence currency, and TPM.
 
-- Firewall
-- Anti-spyware
-- Antivirus
-- BitLocker
-- Microsoft Defender Antimalware
-- Real-time protection
-- Secure Boot
-- Defender security intelligence currency
-- Trusted Platform Module (TPM)
+A completed compliance evaluation showed all configured checks compliant.
 
-During validation, the rebuilt endpoint initially reported **Not Compliant** because Microsoft Defender security intelligence was not current.
+![Intune security compliance all settings compliant](images/compliance/Intune-Security-Compliance-All-Settings-Compliant.png)
 
-Rather than weakening the compliance policy, the issue was remediated through the Intune device action:
+During validation of the rebuilt endpoint, Microsoft Defender security intelligence was initially not current. Rather than weakening the compliance policy, the issue was remediated through the Intune device action **Update Windows Defender security intelligence**.
 
-**Update Windows Defender security intelligence**
+The remote action completed successfully, the device checked in again, and the device returned to **Compliant** status.
 
-The remote action completed successfully, the device checked in again, and the compliance state changed to:
-
-**Compliant**
+![Defender security intelligence remediation completed and device compliant](images/compliance/Intune-Defender-Intelligence-Remediation-Compliant.png)
 
 This demonstrates both compliance evaluation and operational remediation through Intune.
 
@@ -254,18 +227,7 @@ This demonstrates both compliance evaluation and operational remediation through
 
 ## 9. Device-Side Validation
 
-Portal status alone was not treated as sufficient evidence of successful policy deployment.
-
-The project also validates controls directly from Windows using tools including:
-
-- `dsregcmd /status`
-- PowerShell Defender cmdlets
-- Windows Firewall PowerShell cmdlets
-- BitLocker PowerShell / Windows encryption status
-- TPM and Secure Boot validation
-- Windows work or school management information
-- Event Viewer
-- MDM diagnostic event logs
+Portal status alone was not treated as sufficient evidence of successful policy deployment. The project also validates controls directly from Windows using `dsregcmd`, PowerShell, TPM and Secure Boot checks, BitLocker status, Defender/Firewall cmdlets, work/school management information, Event Viewer, and MDM diagnostic logs.
 
 This provides evidence that configured Intune policies actually reached and affected the endpoint.
 
@@ -279,13 +241,19 @@ The most valuable part of the project was troubleshooting an earlier Windows Aut
 
 The original endpoint repeatedly failed during the Autopilot Enrollment Status Page while preparing the device for mobile management.
 
-Troubleshooting showed several indicators:
+The Autopilot deployments report confirmed the failed user-driven deployment.
 
-- Autopilot deployment reported **Failure**
-- Expected Microsoft Intune Management Extension files were absent
-- Expected IME service state was not present
-- MDM diagnostic logs contained Event ID 404 / ADMX installation errors
-- The Autopilot Sidecar / IME stage did not complete successfully
+![Autopilot deployment failure](images/troubleshooting/Autopilot-Deployment-Failure-Redacted.png)
+
+Troubleshooting also showed that the expected Intune Management Extension installation state was absent from the endpoint.
+
+![Intune Management Extension program files absent](images/troubleshooting/IME-Program-Files-Absent.png)
+
+![Intune Management Extension service absent](images/troubleshooting/IME-Service-Absent.png)
+
+MDM diagnostic logs then provided additional technical evidence through Event ID 404 and ADMXInstall failures.
+
+![MDM Event ID 404 ADMXInstall errors](images/troubleshooting/MDM-Event-404-ADMXInstall.png)
 
 ### Root Cause Investigation
 
@@ -296,33 +264,19 @@ HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer
 DisableMSI = 2
 ```
 
-The Intune Windows security configuration contained Windows Installer restrictions equivalent to disabling Windows Installer **Always**.
-
-This policy was identified as a likely blocker for Intune Management Extension installation and processing.
+The Intune Windows security configuration contained Windows Installer restrictions equivalent to disabling Windows Installer **Always**. This policy was identified as a likely blocker for Intune Management Extension installation and processing.
 
 ### Remediation
 
 The Windows Installer restriction was removed from the Intune security configuration while retaining the intended SmartScreen security setting.
 
-A clean Windows 11 VM was then created to remove stale local policy state.
+A clean Windows 11 VM was then created to remove stale local policy state. Before enrollment, the rebuilt device was checked for the previous registry restriction and the `DisableMSI` registry value was no longer present.
 
-Before enrollment, the rebuilt device was checked for the previous registry restriction. The `DisableMSI` registry value was no longer present.
-
-The new device was then registered with Windows Autopilot and provisioned again.
+The new device was registered with Windows Autopilot and provisioned again.
 
 ### Result
 
-The rebuilt endpoint successfully:
-
-- Completed the Autopilot device preparation stage
-- Completed device setup
-- Reached the Windows desktop
-- Joined Microsoft Entra ID
-- Enrolled into Microsoft Intune
-- Installed the Intune Management Extension
-- Reported **EnforcementCompleted**
-- Applied security and configuration policies
-- Reached **Compliant** status
+The rebuilt endpoint successfully completed Autopilot device preparation and device setup, reached the desktop, joined Microsoft Entra ID, enrolled into Intune, installed the Intune Management Extension, reported **EnforcementCompleted**, applied security/configuration policies, and reached **Compliant** status.
 
 The troubleshooting workflow can be summarized as:
 
@@ -343,7 +297,7 @@ images/
 └── troubleshooting/
 ```
 
-Selected screenshots will be used rather than publishing every captured image. The goal is to provide enough evidence to demonstrate each stage while keeping the repository concise and readable.
+Selected screenshots are used rather than publishing every captured image. The goal is to provide enough evidence to demonstrate each stage while keeping the repository concise and readable.
 
 ---
 
@@ -375,15 +329,7 @@ Selected screenshots will be used rather than publishing every captured image. T
 
 ## Security and Privacy
 
-Screenshots are reviewed before publication. Sensitive or unnecessary environment-specific data is masked or redacted where appropriate, including:
-
-- User email addresses / UPNs
-- Tenant identifiers
-- Device identifiers where unnecessary
-- Serial numbers where unnecessary
-- BitLocker recovery passwords
-- Windows LAPS passwords
-- Authentication tokens, secrets, or credentials
+Screenshots are reviewed before publication. Sensitive or unnecessary environment-specific data is masked or redacted where appropriate, including user email addresses / UPNs, tenant identifiers, unnecessary device identifiers, serial numbers, BitLocker recovery passwords, Windows LAPS passwords, authentication tokens, secrets, and credentials.
 
 Technical evidence such as policy names, event IDs, compliance results, PowerShell output, configuration state, and troubleshooting details is intentionally retained where it does not expose sensitive information.
 
