@@ -1,12 +1,12 @@
 # Windows 11 Endpoint Management with Microsoft Intune and Windows Autopilot
 
-A hands-on Microsoft Intune and Windows Autopilot lab demonstrating end-to-end Windows 11 provisioning, cloud identity, endpoint security, compliance, device-side validation, and troubleshooting.
+A hands-on Microsoft Intune and Windows Autopilot lab demonstrating end-to-end Windows 11 provisioning, cloud identity, application deployment, endpoint security, compliance, device-side validation, and troubleshooting.
 
-> **Key outcome:** Successfully provisioned a Windows 11 endpoint through Windows Autopilot, joined it to Microsoft Entra ID, enrolled it into Microsoft Intune, deployed security controls including Microsoft Defender, BitLocker and Windows LAPS, and validated the resulting configuration directly from Windows.
+> **Key outcome:** Successfully provisioned a Windows 11 endpoint through Windows Autopilot, joined it to Microsoft Entra ID, enrolled it into Microsoft Intune, deployed Microsoft 365 Apps and security controls including Microsoft Defender, BitLocker and Windows LAPS, and validated the resulting configuration directly from Windows.
 >
 > **Troubleshooting highlight:** Diagnosed an earlier Autopilot / Intune Management Extension provisioning failure using PowerShell, Event Viewer, MDM diagnostics, Windows services and registry analysis. A Windows Installer restriction (`DisableMSI = 2`) was identified as a likely blocker, the Intune configuration was corrected, and the endpoint was successfully reprovisioned.
 
-**Core Technologies:** Microsoft Intune · Microsoft Entra ID · Windows Autopilot · Windows 11 · PowerShell · Microsoft Defender · BitLocker · Windows LAPS · Hyper-V
+**Core Technologies:** Microsoft Intune · Microsoft Entra ID · Windows Autopilot · Windows 11 · Microsoft 365 Apps · PowerShell · Microsoft Defender · BitLocker · Windows LAPS · Hyper-V
 
 ---
 
@@ -23,6 +23,8 @@ The managed endpoint is a Windows 11 virtual machine running in Hyper-V. The pro
 - Windows Autopilot registration and user-driven deployment
 - Enrollment Status Page configuration
 - Intune Management Extension validation
+- Microsoft 365 Apps deployment and device-group targeting
+- Required application assignment and endpoint-side application validation
 - Settings Catalog and security policy deployment
 - Windows compliance policy configuration and remediation
 - Microsoft Defender Antivirus and Firewall management
@@ -47,6 +49,7 @@ Microsoft Intune
         +-- Windows Autopilot
         +-- Configuration Profiles
         +-- Compliance Policies
+        +-- Microsoft 365 Apps
         +-- Defender / Firewall / ASR
         +-- BitLocker
         +-- Windows LAPS
@@ -62,7 +65,7 @@ Windows 11 Hyper-V Endpoint
 
 ## End-to-End Workflow
 
-**Hardware Hash Collection → Autopilot Registration → Profile Assignment → OOBE Sign-In → Enrollment Status Page → Microsoft Entra Join → Intune Enrollment → Security Policy Deployment → Compliance Evaluation → Remediation → Validation**
+**Hardware Hash Collection → Autopilot Registration → Profile Assignment → OOBE Sign-In → Enrollment Status Page → Microsoft Entra Join → Intune Enrollment → Application Deployment → Security Policy Deployment → Compliance Evaluation → Remediation → Validation**
 
 ---
 
@@ -108,7 +111,33 @@ This was an important validation point because the earlier failed endpoint had n
 
 ---
 
-## 5. Endpoint Security and Configuration
+## 5. Application Deployment — Microsoft 365 Apps
+
+Microsoft 365 Apps was deployed through Intune as a **Required** application to a dedicated Windows 11 pilot device group. This demonstrated targeted application deployment rather than assigning software broadly across the tenant.
+
+The application suite was configured with:
+
+- Microsoft Word, Excel, PowerPoint, Outlook, OneNote, and Teams
+- 64-bit architecture
+- Monthly Enterprise Channel
+- Latest available version
+- Office Open XML as the default file format
+- Removal of other Office versions enabled
+- Microsoft Software License Terms accepted on behalf of users
+
+A dedicated assigned security group, `Intune-Windows11-Pilot-Devices`, was used to target the managed endpoint **DESKTOP-J5P2GES**. The application was assigned as **Required**, and the endpoint was manually synchronized with Intune to initiate a management check-in.
+
+Deployment was validated at multiple stages. Microsoft Office Click-to-Run / Office Deployment activity was observed on the Windows 11 endpoint, Intune subsequently reported the application as **Installed**, and Microsoft Word and Excel were launched successfully on the managed device.
+
+This provided end-to-end evidence of:
+
+**App Configuration → Device Group Targeting → Required Assignment → Device Sync → Office Deployment → Intune Installed Status → Endpoint Launch Validation**
+
+> **Validation note:** Word and Excel were verified as installed and able to launch. Microsoft 365 licensing or user activation was not part of this deployment test.
+
+---
+
+## 6. Endpoint Security and Configuration
 
 ### Device Configuration
 
@@ -146,7 +175,7 @@ Windows LAPS was configured through Intune to demonstrate managed local administ
 
 ---
 
-## 6. Compliance and Remediation
+## 7. Compliance and Remediation
 
 A Windows compliance policy evaluated endpoint security requirements including Firewall, Antivirus, BitLocker, Microsoft Defender Antimalware, real-time protection, Secure Boot, Defender security intelligence currency, and TPM.
 
@@ -160,7 +189,7 @@ The remote action completed successfully, the endpoint checked in again, and the
 
 ---
 
-## 7. Device-Side Validation
+## 8. Device-Side Validation
 
 Portal status alone was not treated as sufficient evidence of successful deployment. Controls were also validated directly from Windows using:
 
@@ -177,7 +206,7 @@ This provided evidence that configured policies had actually reached and affecte
 
 ---
 
-## 8. Troubleshooting Case Study: Autopilot / IME Failure
+## 9. Troubleshooting Case Study: Autopilot / IME Failure
 
 The most valuable troubleshooting exercise in the project came from an earlier Windows Autopilot deployment failure.
 
@@ -244,6 +273,7 @@ images/
 ├── compliance/
 ├── bitlocker/
 ├── laps/
+├── apps/
 ├── validation/
 └── troubleshooting/
 ```
@@ -258,6 +288,10 @@ Selected screenshots are used rather than publishing every captured image, keepi
 - [x] Windows Autopilot registration and user-driven deployment
 - [x] Enrollment Status Page configuration and successful provisioning
 - [x] Intune Management Extension validation
+- [x] Microsoft 365 Apps configuration and deployment
+- [x] Dedicated Windows 11 pilot device-group targeting
+- [x] Required application assignment and Intune deployment validation
+- [x] Word and Excel endpoint launch validation
 - [x] Windows configuration and endpoint security policies
 - [x] Microsoft Defender Firewall and Attack Surface Reduction
 - [x] BitLocker encryption and recovery key escrow
@@ -277,7 +311,7 @@ Technical evidence such as policy names, event IDs, compliance results, PowerShe
 
 ## Key Takeaways
 
-This project demonstrates an end-to-end cloud endpoint lifecycle rather than only the creation of Intune policies. It combines provisioning, identity, endpoint security, compliance, remediation, endpoint-side validation, and structured troubleshooting.
+This project demonstrates an end-to-end cloud endpoint lifecycle rather than only the creation of Intune policies. It combines provisioning, identity, application deployment, endpoint security, compliance, remediation, endpoint-side validation, and structured troubleshooting.
 
 The strongest technical outcome was diagnosing a failed Autopilot deployment, tracing the problem through endpoint state and MDM diagnostics, identifying a Windows Installer restriction as a likely blocker, correcting the configuration, rebuilding the endpoint, and validating successful provisioning and compliance afterward.
 
