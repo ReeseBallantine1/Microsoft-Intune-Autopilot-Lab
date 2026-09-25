@@ -2,17 +2,17 @@
 
 A hands-on Microsoft Intune and Windows Autopilot lab demonstrating end-to-end Windows 11 provisioning, cloud identity, application deployment, endpoint security, compliance, device-side validation, and troubleshooting.
 
-> **Key outcome:** Successfully provisioned a Windows 11 endpoint through Windows Autopilot, joined it to Microsoft Entra ID, enrolled it into Microsoft Intune, deployed Microsoft 365 Apps and security controls including Microsoft Defender, BitLocker and Windows LAPS, and validated the resulting configuration directly from Windows.
+> **Key outcome:** Successfully provisioned a Windows 11 endpoint through Windows Autopilot, joined it to Microsoft Entra ID, enrolled it into Microsoft Intune, deployed Microsoft 365 Apps and a packaged Win32 application, applied security controls including Microsoft Defender, BitLocker and Windows LAPS, and validated the resulting configuration directly from Windows.
 >
 > **Troubleshooting highlight:** Diagnosed an earlier Autopilot / Intune Management Extension provisioning failure using PowerShell, Event Viewer, MDM diagnostics, Windows services and registry analysis. A Windows Installer restriction (`DisableMSI = 2`) was identified as a likely blocker, the Intune configuration was corrected, and the endpoint was successfully reprovisioned.
 
-**Core Technologies:** Microsoft Intune · Microsoft Entra ID · Windows Autopilot · Windows 11 · Microsoft 365 Apps · PowerShell · Microsoft Defender · BitLocker · Windows LAPS · Hyper-V
+**Core Technologies:** Microsoft Intune · Microsoft Entra ID · Windows Autopilot · Windows 11 · Microsoft 365 Apps · Win32 Apps · PowerShell · Microsoft Defender · BitLocker · Windows LAPS · Hyper-V
 
 ---
 
 ## Overview
 
-This project simulates a modern cloud-managed Windows endpoint lifecycle: registering a device with Autopilot, provisioning it through OOBE, joining it to Microsoft Entra ID, enrolling it into Intune, applying security and configuration policies, evaluating compliance, validating controls directly on the endpoint, and troubleshooting a failed deployment through root-cause analysis and remediation.
+This project simulates a modern cloud-managed Windows endpoint lifecycle: registering a device with Autopilot, provisioning it through OOBE, joining it to Microsoft Entra ID, enrolling it into Intune, deploying applications, applying security and configuration policies, evaluating compliance, validating controls directly on the endpoint, and troubleshooting a failed deployment through root-cause analysis and remediation.
 
 The managed endpoint is a Windows 11 virtual machine running in Hyper-V. The project was created as a practical lab and portfolio environment rather than a production deployment.
 
@@ -24,6 +24,8 @@ The managed endpoint is a Windows 11 virtual machine running in Hyper-V. The pro
 - Enrollment Status Page configuration
 - Intune Management Extension validation
 - Microsoft 365 Apps deployment and device-group targeting
+- Win32 application packaging and deployment
+- Win32 application requirements and detection rules
 - Required application assignment and endpoint-side application validation
 - Settings Catalog and security policy deployment
 - Windows compliance policy configuration and remediation
@@ -50,6 +52,7 @@ Microsoft Intune
         +-- Configuration Profiles
         +-- Compliance Policies
         +-- Microsoft 365 Apps
+        +-- Win32 Applications
         +-- Defender / Firewall / ASR
         +-- BitLocker
         +-- Windows LAPS
@@ -60,7 +63,8 @@ Windows 11 Hyper-V Endpoint
         +-- Microsoft Entra Joined
         +-- Intune Enrolled
         +-- Intune Management Extension
-        +-- Device-side validation with PowerShell
+        +-- Required Applications
+        +-- Device-side validation
 ```
 
 ## End-to-End Workflow
@@ -137,7 +141,73 @@ This provided end-to-end evidence of:
 
 ---
 
-## 6. Endpoint Security and Configuration
+## 6. Win32 Application Deployment — 7-Zip
+
+To demonstrate Win32 application packaging and deployment through Microsoft Intune, **7-Zip 26.03 x64** was packaged using the Microsoft Win32 Content Prep Tool and deployed as a **Required** application.
+
+The original installer `7z2603-x64.exe` was packaged into:
+
+`7z2603-x64.intunewin`
+
+The Intune application was configured with:
+
+- **Application name:** 7-Zip 26.03 - Win32
+- **Install command:** `7z2603-x64.exe /S`
+- **Uninstall command:** `"%ProgramFiles%\7-Zip\Uninstall.exe" /S`
+- **Install behavior:** System
+- **Architecture requirement:** 64-bit
+- **Minimum operating system:** Windows 11 21H2
+- **Detection rule:** `C:\Program Files\7-Zip\7zFM.exe` exists
+- **Assignment:** Required
+- **Target group:** `Intune-Windows11-Pilot-Devices`
+
+### Win32 Program Configuration
+
+The Win32 application's installation and uninstall commands were configured for silent execution in the system context.
+
+![7-Zip Win32 program configuration](images/7Zip-Win32-Program-Configuration.png)
+
+### Requirements
+
+The application was configured for 64-bit Windows with Windows 11 21H2 as the minimum supported operating system.
+
+![7-Zip Win32 requirements](images/7Zip-Win32-Requirements.png)
+
+### Detection Rule
+
+A file-based detection rule was configured to check for:
+
+`C:\Program Files\7-Zip\7zFM.exe`
+
+This allowed Intune to determine whether the application was present on the endpoint.
+
+![7-Zip Win32 detection rule](images/7Zip-Win32-Detection-Rule.png)
+
+### Required Assignment
+
+The application was assigned as **Required** to the dedicated `Intune-Windows11-Pilot-Devices` device group.
+
+![7-Zip Win32 required assignment](images/7Zip-Win32-Required-Assignment.png)
+
+### Deployment Validation
+
+The targeted Windows 11 endpoint, **DESKTOP-J5P2GES**, subsequently reported **Version 26.03** and **Status: Installed** in the Intune device install status.
+
+![7-Zip Intune deployment success](images/7Zip-Win32-Intune-Deployment-Success.png)
+
+7-Zip File Manager was then launched directly on the Windows 11 VM to confirm that the application was present and could open successfully.
+
+![7-Zip endpoint validation](images/7Zip-Win32-Endpoint-Validation.png)
+
+This provided evidence of:
+
+**Win32 Packaging → Intune App Configuration → Requirements → Detection Rule → Required Assignment → Intune Installed Status → Endpoint Launch Validation**
+
+> **Validation note:** The evidence demonstrates successful Intune reporting and application launch on the lab endpoint. It does not represent broader production deployment testing.
+
+---
+
+## 7. Endpoint Security and Configuration
 
 ### Device Configuration
 
@@ -175,7 +245,7 @@ Windows LAPS was configured through Intune to demonstrate managed local administ
 
 ---
 
-## 7. Compliance and Remediation
+## 8. Compliance and Remediation
 
 A Windows compliance policy evaluated endpoint security requirements including Firewall, Antivirus, BitLocker, Microsoft Defender Antimalware, real-time protection, Secure Boot, Defender security intelligence currency, and TPM.
 
@@ -189,9 +259,9 @@ The remote action completed successfully, the endpoint checked in again, and the
 
 ---
 
-## 8. Device-Side Validation
+## 9. Device-Side Validation
 
-Portal status alone was not treated as sufficient evidence of successful deployment. Controls were also validated directly from Windows using:
+Portal status alone was not treated as sufficient evidence of successful deployment. Controls and application deployments were also validated directly from Windows where appropriate using:
 
 - `dsregcmd /status`
 - PowerShell
@@ -199,14 +269,15 @@ Portal status alone was not treated as sufficient evidence of successful deploym
 - BitLocker status
 - Defender and Firewall cmdlets
 - Work/school management information
+- Application launch validation
 - Event Viewer
 - MDM diagnostic logs
 
-This provided evidence that configured policies had actually reached and affected the endpoint.
+This provided endpoint-side evidence alongside the configuration and status information reported by Intune.
 
 ---
 
-## 9. Troubleshooting Case Study: Autopilot / IME Failure
+## 10. Troubleshooting Case Study: Autopilot / IME Failure
 
 The most valuable troubleshooting exercise in the project came from an earlier Windows Autopilot deployment failure.
 
@@ -273,12 +344,19 @@ images/
 ├── compliance/
 ├── bitlocker/
 ├── laps/
-├── apps/
 ├── validation/
-└── troubleshooting/
+├── troubleshooting/
+├── 7Zip-Win32-Program-Configuration.png
+├── 7Zip-Win32-Requirements.png
+├── 7Zip-Win32-Detection-Rule.png
+├── 7Zip-Win32-Required-Assignment.png
+├── 7Zip-Win32-Intune-Deployment-Success.png
+└── 7Zip-Win32-Endpoint-Validation.png
 ```
 
 Selected screenshots are used rather than publishing every captured image, keeping the repository readable while providing evidence for each major stage.
+
+The short 7-Zip deployment and endpoint-validation recordings are retained separately for portfolio demonstrations and social media rather than being stored in the GitHub repository.
 
 ## Project Status
 
@@ -292,6 +370,11 @@ Selected screenshots are used rather than publishing every captured image, keepi
 - [x] Dedicated Windows 11 pilot device-group targeting
 - [x] Required application assignment and Intune deployment validation
 - [x] Word and Excel endpoint launch validation
+- [x] 7-Zip Win32 application packaging
+- [x] Win32 requirements and detection rule configuration
+- [x] Required 7-Zip deployment to pilot device group
+- [x] Intune 7-Zip installed-status validation
+- [x] 7-Zip endpoint launch validation
 - [x] Windows configuration and endpoint security policies
 - [x] Microsoft Defender Firewall and Attack Surface Reduction
 - [x] BitLocker encryption and recovery key escrow
@@ -307,13 +390,15 @@ Selected screenshots are used rather than publishing every captured image, keepi
 
 Screenshots are reviewed before publication. Sensitive or unnecessary environment-specific data is masked or redacted where appropriate, including user email addresses / UPNs, tenant identifiers, unnecessary device identifiers, serial numbers, BitLocker recovery passwords, Windows LAPS passwords, authentication tokens, secrets, and credentials.
 
-Technical evidence such as policy names, event IDs, compliance results, PowerShell output, configuration state, and troubleshooting details is retained where it does not expose sensitive information.
+Technical evidence such as policy names, event IDs, compliance results, PowerShell output, configuration state, application deployment status, and troubleshooting details is retained where it does not expose sensitive information.
 
 ## Key Takeaways
 
-This project demonstrates an end-to-end cloud endpoint lifecycle rather than only the creation of Intune policies. It combines provisioning, identity, application deployment, endpoint security, compliance, remediation, endpoint-side validation, and structured troubleshooting.
+This project demonstrates an end-to-end cloud endpoint lifecycle rather than only the creation of Intune policies. It combines provisioning, identity, application deployment, Win32 application management, endpoint security, compliance, remediation, endpoint-side validation, and structured troubleshooting.
 
-The strongest technical outcome was diagnosing a failed Autopilot deployment, tracing the problem through endpoint state and MDM diagnostics, identifying a Windows Installer restriction as a likely blocker, correcting the configuration, rebuilding the endpoint, and validating successful provisioning and compliance afterward.
+Application management was demonstrated through both Microsoft 365 Apps deployment and a packaged Win32 application. The 7-Zip deployment added practical experience with `.intunewin` packaging, silent installation commands, system-context installation, application requirements, detection rules, required device-group assignment, Intune deployment-status validation, and endpoint launch validation.
+
+The strongest troubleshooting outcome was diagnosing a failed Autopilot deployment, tracing the problem through endpoint state and MDM diagnostics, identifying a Windows Installer restriction as a likely blocker, correcting the configuration, rebuilding the endpoint, and validating successful provisioning and compliance afterward.
 
 The project demonstrates practical skills relevant to endpoint support, desktop engineering, infrastructure support, systems administration, and modern workplace roles.
 
@@ -321,4 +406,4 @@ The project demonstrates practical skills relevant to endpoint support, desktop 
 
 ## Disclaimer
 
-This project was created in a lab environment for educational and portfolio purposes. It does not represent a production Microsoft Intune deployment. Configuration decisions were made to demonstrate endpoint management, security, compliance, provisioning, and troubleshooting concepts in a controlled environment.
+This project was created in a lab environment for educational and portfolio purposes. It does not represent a production Microsoft Intune deployment. Configuration decisions were made to demonstrate endpoint management, application deployment, security, compliance, provisioning, and troubleshooting concepts in a controlled environment.
